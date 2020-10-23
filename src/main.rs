@@ -2,7 +2,7 @@ extern crate clap;
 
 use clap::{App, Arg, SubCommand};
 use std::env;
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 
 fn main() {
     let matches = App::new("ezRest")
@@ -12,21 +12,24 @@ fn main() {
         .about("Cli executable for setting up an ezRest project.")
         .subcommand(SubCommand::with_name("make:route")
                     .about("Makes new route file by give name")
-                    .author("Simon <simonpeters05@gmail.com>")
-                    .arg(Arg::with_name("INPUT")
-                         .help("Generates route and model file")
-                         .index(1)))
                     .arg(Arg::with_name("model")
                          .help("Makes a model file")
+                         .takes_value(false)
                          .short("m"))
                     .arg(Arg::with_name("route")
                          .help("Makes a route file")
+                         .takes_value(false)
                          .short("r"))
+                    .arg(Arg::with_name("INPUT")
+                         .help("Generates route and model file")
+                         .index(1)))
         .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("make:route") {
         let model = matches.is_present("model");
         let route = matches.is_present("route");
+
+        println!("Model value: {}", model);
 
         match matches.value_of("INPUT") {
             Some(inp) => make_files(inp, model, route),
@@ -37,8 +40,18 @@ fn main() {
 
 fn make_files(route_name: &str, model_present: bool, route_present: bool) {
     let path = env::var("PWD").unwrap();
-    if !model_present && !route_present {
-        let filename: &str = format!("{}/{}", path, "models/test.rs");
-        File::create(filename);
+    if (!model_present && !route_present) || (model_present && route_present) {
+        create_dir_all(format!("{}/{}", &path, "src/models")).unwrap();
+        create_dir_all(format!("{}/{}", &path, "src/routes")).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/routes", format!("{}{}", route_name, "Routes.rs"))).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/models", format!("{}{}", route_name, ".rs"))).unwrap();
+    } else if !model_present && route_present {
+        create_dir_all(format!("{}/{}", &path, "src/routes")).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/routes", format!("{}{}", route_name, "Routes.rs"))).unwrap();
+    } else if model_present && !route_present {
+        create_dir_all(format!("{}/{}", &path, "src/models")).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/models", format!("{}{}", route_name, ".rs"))).unwrap();
+    } else {
+        panic!("Error while creating files");
     }
 }
