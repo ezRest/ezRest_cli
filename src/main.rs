@@ -3,6 +3,8 @@ extern crate clap;
 use clap::{App, Arg, SubCommand};
 use std::env;
 use std::fs::{File, create_dir_all};
+use std::process::Command;
+use std::io::{self, Write};
 
 fn main() {
     let matches = App::new("ezRest")
@@ -23,7 +25,22 @@ fn main() {
                     .arg(Arg::with_name("INPUT")
                          .help("Generates route and model file")
                          .index(1)))
+
+        .arg(Arg::with_name("clone")
+            .help("Clones the ezRest repo from github")
+            .takes_value(false)
+            .short("c"))
         .get_matches();
+
+    if matches.is_present("clone") {
+        let command_result = Command::new("git")
+            .args(&["clone", "https://github.com/ezRest/ezRest", "."])
+            .output()
+            .expect("Something went wrong while cloning");
+
+        io::stdout().write_all(&command_result.stdout);
+        io::stderr().write_all(&command_result.stderr);
+    }
 
     if let Some(matches) = matches.subcommand_matches("make:route") {
         let model = matches.is_present("model");
