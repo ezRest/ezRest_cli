@@ -29,7 +29,8 @@ fn main() {
         .arg(Arg::with_name("clone")
             .help("Clones the ezRest repo from github")
             .takes_value(false)
-            .short("c"))
+            .short("c")
+            .long("clone"))
         .get_matches();
 
     if matches.is_present("clone") {
@@ -38,8 +39,8 @@ fn main() {
             .output()
             .expect("Something went wrong while cloning");
 
-        io::stdout().write_all(&command_result.stdout);
-        io::stderr().write_all(&command_result.stderr);
+        io::stdout().write_all(&command_result.stdout).unwrap();
+        io::stderr().write_all(&command_result.stderr).unwrap();
     }
 
     if let Some(matches) = matches.subcommand_matches("make:route") {
@@ -60,14 +61,14 @@ fn make_files(route_name: &str, model_present: bool, route_present: bool) {
     if (!model_present && !route_present) || (model_present && route_present) {
         create_dir_all(format!("{}/{}", &path, "src/models")).unwrap();
         create_dir_all(format!("{}/{}", &path, "src/routes")).unwrap();
-        File::create(format!("{}/{}/{}", &path, "src/routes", format!("{}{}", route_name, "Routes.rs"))).unwrap();
-        File::create(format!("{}/{}/{}", &path, "src/models", format!("{}{}", route_name, ".rs"))).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/routes", [route_name, "Routes.rs"].concat())).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/models", [route_name, ".rs"].concat())).unwrap();
     } else if !model_present && route_present {
         create_dir_all(format!("{}/{}", &path, "src/routes")).unwrap();
-        File::create(format!("{}/{}/{}", &path, "src/routes", format!("{}{}", route_name, "Routes.rs"))).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/routes", [route_name, "Routes.rs"].concat())).unwrap();
     } else if model_present && !route_present {
         create_dir_all(format!("{}/{}", &path, "src/models")).unwrap();
-        File::create(format!("{}/{}/{}", &path, "src/models", format!("{}{}", route_name, ".rs"))).unwrap();
+        File::create(format!("{}/{}/{}", &path, "src/models", [route_name, ".rs"].concat())).unwrap();
     } else {
         panic!("Error while creating files");
     }
